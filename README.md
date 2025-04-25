@@ -1,12 +1,5 @@
-Perfecto. Para que los bloques de código se puedan copiar fácilmente en GitHub, no necesitas hacer nada especial: GitHub ya muestra automáticamente el botón de **copiar código** en cada bloque encerrado entre triple backticks (```), como los que ya usé en el formato que te pasé.
 
-Aquí te dejo nuevamente el `README.md` completo, optimizado para presentación en GitHub con todo bien ordenado, y además te doy el contenido del archivo `cliente.sh` por separado al final.
-
----
-
-### `README.md`
-
-```markdown
+markdown
 # Compartir Internet por Ethernet entre dos máquinas Arch Linux (Wi-Fi a Ethernet)
 
 Este repositorio contiene un script para permitir que una máquina Arch Linux actúe como **cliente**, conectándose a otra máquina Arch que está compartiendo su conexión Wi-Fi a través de un cable Ethernet.
