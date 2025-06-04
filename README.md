@@ -1,5 +1,4 @@
 
-markdown
 # Compartir Internet por Ethernet entre dos máquinas Arch Linux (Wi-Fi a Ethernet)
 
 Este repositorio contiene un script para permitir que una máquina Arch Linux actúe como **cliente**, conectándose a otra máquina Arch que está compartiendo su conexión Wi-Fi a través de un cable Ethernet.
