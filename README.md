@@ -37,7 +37,7 @@ Es una solución **minimalista**, ideal para **sistemas Arch Linux o derivados**
 
 ---
 
-## ⚙️ Instalación rápida
+## ⚙️ Instalación rapida y sencilla
 
 ### 🔹 Máquina A (la que comparte Internet)
 
