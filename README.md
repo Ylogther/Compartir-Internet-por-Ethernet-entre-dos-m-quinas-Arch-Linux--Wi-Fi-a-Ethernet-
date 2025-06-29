@@ -1,130 +1,101 @@
+# 📡 Compartir Internet por Ethernet entre dos máquinas Arch Linux (Wi-Fi → RJ45)
 
-# Compartir Internet por Ethernet entre dos máquinas Arch Linux (Wi-Fi a Ethernet)
-
-Este repositorio contiene un script para permitir que una máquina Arch Linux actúe como **cliente**, conectándose a otra máquina Arch que está compartiendo su conexión Wi-Fi a través de un cable Ethernet.
-
-## Escenario
-
-- **Servidor (host)**: Conectado a una red Wi-Fi y comparte su conexión a internet mediante su interfaz Ethernet.
-- **Cliente**: Se conecta al servidor mediante cable Ethernet para acceder a internet.
-
-Este enfoque es útil cuando una máquina no tiene Wi-Fi, o se desea compartir internet directamente por cable.
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Arch Linux](https://img.shields.io/badge/compatibilidad-ArchLinux-%236C6C6C?logo=arch-linux&logoColor=white)
+![Estado: Estable](https://img.shields.io/badge/estado-estable-brightgreen)
+![Shell Script](https://img.shields.io/badge/bash-compatible-yellowgreen)
+![Soporte: NAT + IP estática](https://img.shields.io/badge/soporte-NAT%20%2B%20IP%20est%C3%A1tica-orange)
 
 ---
 
-## Requisitos
+## ✨ Descripción
 
-- Ambas máquinas usan **NetworkManager**.
-- El servidor ha configurado la conexión cableada como `ipv4.method shared`.
-- Ya hay un cable Ethernet conectado entre ambas máquinas.
-- El cliente tiene una interfaz ethernet (como `enp4s0`) visible con `ip link`.
+Este proyecto permite compartir tu conexión a Internet **desde una máquina con Wi-Fi** hacia otra conectada por **cable Ethernet (RJ45)**, usando herramientas nativas de Linux como `iproute2`, `iptables` y `systemd`.
+
+Es una solución **minimalista**, ideal para **sistemas Arch Linux o derivados** que no usan `NetworkManager`, con control total sobre el enrutamiento y sin dependencias innecesarias.
 
 ---
 
-## Cliente: Script de conexión
+## 🧰 Contenido
 
-Este script configura manualmente la IP, puerta de enlace y DNS en el **cliente**.
+- `share-internet.sh` – Script para la **máquina que comparte** internet (Wi-Fi a Ethernet).
+- `lan-client.sh` – Script para la **máquina que recibe** internet por Ethernet.
+- Servicios systemd opcionales (`*.service`) para ejecución automática al inicio del sistema.
 
-### Script `cliente.sh`
+---
+
+## 📦 Requisitos
+
+- Dos máquinas con Linux (idealmente Arch)
+- Interfaces disponibles:  
+  - Wi-Fi (ej: `wlan0`)  
+  - Ethernet (ej: `enp3s0`)
+- Paquetes necesarios:
+  ```bash
+  sudo pacman -S --needed iproute2 iptables-nft
+````
+
+---
+
+## ⚙️ Instalación rápida
+
+### 🔹 Máquina A (la que comparte Internet)
 
 ```bash
-#!/bin/bash
-
-# Interfaz Ethernet del cliente (ajústala si es diferente)
-IFACE="enp4s0"
-
-echo "[+] Activando interfaz $IFACE"
-sudo ip link set $IFACE up
-
-echo "[+] Limpiando IPs anteriores"
-sudo ip addr flush dev $IFACE
-
-echo "[+] Asignando IP estática"
-sudo ip addr add 10.42.0.2/24 dev $IFACE
-
-echo "[+] Agregando puerta de enlace"
-sudo ip route add default via 10.42.0.1
-
-echo "[+] Configurando DNS (Google)"
-echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
-
-echo "[✓] Conexión lista. Puedes probar con: ping 8.8.8.8"
+sudo install -m755 share-internet.sh /usr/local/sbin/
+sudo cp share-internet.service /etc/systemd/system/
+sudo systemctl enable --now share-internet.service
 ```
 
-### Uso
-
-1. Guarda el script como `cliente.sh`.
-2. Da permisos de ejecución:
-
-   ```bash
-   chmod +x cliente.sh
-   ```
-
-3. Ejecuta el script:
-
-   ```bash
-   ./cliente.sh
-   ```
+> ⚠️ Edita `share-internet.sh` para configurar correctamente tus interfaces (`IFACE_WAN`, `IFACE_LAN`).
 
 ---
 
-## Servidor: Compartir internet por cable
-
-1. Comparte la conexión Wi-Fi por Ethernet:
-
-   ```bash
-   nmcli connection modify "Conexión cableada 1" ipv4.method shared
-   nmcli connection up "Conexión cableada 1"
-   ```
-
-2. Verifica que la IP compartida esté activa (por lo general `10.42.0.1`):
-
-   ```bash
-   ip a | grep enpXsY
-   ```
-
----
-
-## Verifica la conexión
-
-En el cliente, ejecuta:
+### 🔹 Máquina B (cliente)
 
 ```bash
-ping 8.8.8.8
+sudo install -m755 lan-client.sh /usr/local/sbin/
+sudo cp lan-client.service /etc/systemd/system/
+sudo systemctl enable --now lan-client.service
 ```
 
-Y si tienes respuesta, puedes intentar:
+> ⚠️ Ajusta la IP local (`CLIENT_IP`) y el gateway (`GATEWAY`) en `lan-client.sh`.
 
-```bash
-ping google.com
+---
+
+## 🖥️ Esquema de red
+
+```plaintext
+┌─────────────┐      Wi-Fi      ┌──────────────┐      Ethernet       ┌─────────────┐
+│   Internet  │◄──────────────►│  Máquina A    │◄───────────────────►│  Máquina B  │
+└─────────────┘                │(Compartidor)  │                    │ (Cliente)   │
+                              └──────────────┘                    └─────────────┘
 ```
 
 ---
 
+## ✅ Estado del proyecto
+
+Este script es **estable**, probado en múltiples escenarios:
+
+* Conexión NAT funcional
+* Transferencias directas con `iperf3`, `rsync` y `scp`
+* Acceso completo a DNS, HTTP, HTTPS
+* Sin interferencias con redes existentes
+
 ---
 
-### `cliente.sh` (contenido para crear el script):
+## 🔐 Seguridad
 
-```bash
-#!/bin/bash
+* Reglas `iptables` mínimas, solo NAT + forwarding.
+* No se expone ningún puerto externo ni se levanta ningún demonio innecesario.
+* Puedes auditar y reforzar fácilmente la configuración.
 
-# Interfaz Ethernet del cliente (ajústala si es diferente)
-IFACE="enp4s0"
+---
 
-echo "[+] Activando interfaz $IFACE"
-sudo ip link set $IFACE up
+## 📝 Licencia
 
-echo "[+] Limpiando IPs anteriores"
-sudo ip addr flush dev $IFACE
+Este proyecto está licenciado bajo la **[MIT License](LICENSE)**.
+Puedes usarlo, modificarlo y distribuirlo libremente bajo los términos de dicha licencia.
 
-echo "[+] Asignando IP estática"
-sudo ip addr add 10.42.0.2/24 dev $IFACE
-
-echo "[+] Agregando puerta de enlace"
-sudo ip route add default via 10.42.0.1
-
-echo "[+] Configurando DNS (Google)"
-echo "nameserver 8.8.8.8" | sudo tee /etc/resolv.conf
-
-echo "[✓] Conexión lista. Puedes probar con: ping 8.8.8.8"
-```
+---
