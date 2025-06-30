@@ -12,7 +12,7 @@ GATEWAY="10.0.0.1"      # IP de Máquina A
 # ===================================================================
 
 echo "[*] Configurando IP $CLIENT_IP/24 en $IFACE_LAN..."
-ip addr add "$CLIENT_IP/24" dev "$IFACE_LAN" || true
-ip route add default vía "$GATEWAY"
+sudo ip addr add "$CLIENT_IP/24" dev "$IFACE_LAN" || true
+sudo ip route add default vía "$GATEWAY"
 
 echo "✔ Conexión lista. Prueba con:  ping -c3 archlinux.org"
